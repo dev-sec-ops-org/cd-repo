@@ -1,36 +1,34 @@
 #!/bin/sh
-# Get the number of change reported by git
-changeCount = 'git status --porcelain | wc -l'
 
-if [ $changeCount = "0" ]; then
-    echo "There are no changed filed."
+NOCOLOR='\033[0m'
+ERROR='\033[0;31m'
+
+# Get the Branch is checking
+Branch=$(git rev-parse --abbrev-ref HEAD)
+echo "You are working on $Branch branch."
+
+if [ "$Branch" != "dev" ]
+then
+    echo ${ERROR}Not on dev. Aborting. # ${NOCOLOR}
+    echo
     exit 0
 fi
-echo "There are $changeCount changed files."
 
-# Create a new branch
-dateStr = 'date +"%Y%m%d_%H%M%S"'
-branchName = "_autobranch_$dateStr"
-echo "Creating new brnach '$branchName' ..."
+# Get the number of change, and git tag version reported by git
+changeCount=$(git status --porcelain | wc -l)
+tagVersion=$(git tag)
+latesttagVersion=$(git describe --tags --abbrev=0)
 
-git branch $branchName
-echo "Checking out..."
-git checkout -q $branchName
-echo "Adding changed/new files..."
-git add -A
-echo "Doing commit..."
-git commit -m "Auto commit. Date $dateStr."
-rc=$?
-
-if [ $rc = "0"]; then
-echo "Branch created."
-git checkout master
-echo -n "Merg branch into master..."
-git merge $branchName
-rc=$?
-if ; [ src=")"]; then
-    echo "Done."
-    exit 0
+if [ $changeCount == "0" ]; then
+    echo "\nThere are no changed files."
+    #exit 0
 else
-    echo "Error."
-    exit $src
+    echo "\nThere are $changeCount changed files."
+
+    echo "\nTag Version is:"
+    echo "$tagVersion"
+    echo "Latest Tag version: $latesttagVersion"
+
+fi
+
+echo "\nDone!"
